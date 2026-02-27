@@ -129,7 +129,7 @@ void rejen_fren() {
 
 void telemetri_ve_istatistik_yazdir() {
     // istatistiklerimizi görmek için kullanılan fonksiyon. Anlık telemetri verileri ve sürüş istatistikleri burada yazdırılır.
-    // Anlık Telemetri Verileri
+    // Anlık Telemetri Verileri //
     printf("\n--- ANLIK TELEMETRİ ---\n");
     printf("Güncel Hız: %.1f km/s\n", guncel_hiz);
     printf("Batarya: %%%d\n", batarya_yuzdesi);
