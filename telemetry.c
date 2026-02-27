@@ -3,7 +3,7 @@
 #include "telemetry.h"
 
 
-// KAPSÜLLENEN MODÜL DEĞİŞKENLERİ
+// KAPSÜLLENEN MODÜL DEĞİŞKENLERİ - dışarıdan değiştirilemez static ile tutulur.
 static float guncel_hiz = 0.0f;
 static float motor_sicakligi;
 static float batarya_sicakligi;
@@ -20,7 +20,8 @@ static int rejen_sayaci = 0;
 
 
 static void sinir_kontrolleri_yap() {
-
+    // arabanın güvenli sınırlar içinde çalışmasını sağlamak için sıcaklık ve hız sınırları kontrol edilir.
+    // aşırı ısınma durumunda sistem kapatılır.
     if (motor_sicakligi > 90.0f || batarya_sicakligi > 70.0f) {
         printf("\nKRİTİK HATA: Aşırı Isınma! Sistem kapatılıyor.\n");
         exit(1);
@@ -42,32 +43,34 @@ void sistemi_kur(float baslangic_sicaklik, int baslangic_sarj) {
     
 }
 
-void gaza_bas() {
+void gaza_bas() { // gaza basıldığında hız artar, şarj düşer batarya ısınır.
 
-    if (batarya_yuzdesi <= 1) {
+    if (batarya_yuzdesi <= 1) { // 1 ve altına düşerse sürüş engellenir.
         printf("\nUYARI: Batarya Tükendi! Araç hareket ettirilemez.\n");
         return;
     }
 
-    float artis = (rand() % 81 + 20) / 10.0f;
-
+    float artis = (rand() % 81 + 20) / 10.0f; // gaza basıldığında artış oranıdır.
+    
+    // gaza basıldığından etkilenen parametreler burada ve güncellenirler.
     guncel_hiz += artis;
     batarya_yuzdesi -= 2;
     motor_sicakligi += 5.0f;
     batarya_sicakligi += 2.0f;   
-
+    // hızlanma kaydı tutulur, MAX_KAYIT sınırına kadar kaydedilir. 100 olarak belirlenmiştik, daha fazla kaydedilmez.
     if (hizlanma_sayaci < MAX_KAYIT) {
         hizlanma_kayitlari[hizlanma_sayaci] = artis;
         hizlanma_sayaci++;
     }
 
     sinir_kontrolleri_yap();
+    // kontrolden sonra bilgi basıyoruz. eğer kontrolü geçerse bilgi basılır, geçemezse kritik hata mesajı basılır ve sistem kapatılır.
     printf("[BİLGİ] Gaza basıldı. Araç %.1f km/s hızlandı. Motor: %.1f°C, Batarya: %.1f°C\n", artis, motor_sicakligi, batarya_sicakligi);
 
 } 
 
 void frene_bas() {
-
+    // aşadağı frene basıldığında hız düşer, şarj artar, sıcaklık düşer. Eğer araç zaten duruyorsa uyarı verilir.
     if (guncel_hiz <= 0.0f) {
         printf("\nUYARI: Araç zaten duruyor!\n");
         return;
@@ -95,6 +98,7 @@ void frene_bas() {
 }
 
 void rejen_fren() {
+    // aşağıda rejeneratif frenleme yapıldığında hız düşer, şarj artar, sıcaklık düşer. Eğer araç duruyorsa uyarı verilir.
     if (guncel_hiz <= 0.0f) {
         printf("\nUYARI: Araç dururken rejeneratif fren yapılamaz!\n");
         return;
@@ -124,7 +128,7 @@ void rejen_fren() {
 }
 
 void telemetri_ve_istatistik_yazdir() {
-
+    // istatistiklerimizi görmek için kullanılan fonksiyon. Anlık telemetri verileri ve sürüş istatistikleri burada yazdırılır.
     // Anlık Telemetri Verileri
     printf("\n--- ANLIK TELEMETRİ ---\n");
     printf("Güncel Hız: %.1f km/s\n", guncel_hiz);
@@ -153,7 +157,7 @@ void telemetri_ve_istatistik_yazdir() {
     printf("Rejeneratif Frenleme Sayısı: %d (Ortalama Düşüş: %.2f km/s)\n", rejen_sayaci, ort_rejen);
 }
 
-void sistemi_kapat() {
+void sistemi_kapat() { // son bilgiler basılır ve sistem kapatılır
     printf("\n[BİLGİ] Sistem kapatılıyor... Son Sürüş İstatistikleri:\n");
     telemetri_ve_istatistik_yazdir();
     printf("\n[BİLGİ] Motor güvenli bir şekilde kapatıldı. İyi günler!\n");
